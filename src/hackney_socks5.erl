@@ -52,7 +52,7 @@ connect(Host, Port, Opts, Timeout) when is_list(Host), is_integer(Port),
   %% connect to the socks 5 proxy
   case gen_tcp:connect(ProxyHost, ProxyPort, ConnectOpts, Timeout) of
     {ok, Socket} ->
-      Ret = case do_handshake(Socket, Host, Port, Opts) of
+      case do_handshake(Socket, Host, Port, Opts) of
         ok ->
           case Transport of
             hackney_ssl ->
@@ -71,12 +71,7 @@ connect(Host, Port, Opts, Timeout) when is_list(Host), is_integer(Port),
         Error ->
           gen_tcp:close(Socket),
           Error
-      end,
-  	  case Ret of
-		  {ok, _} -> ok;
-		  {error, _} -> gen_tcp:close(Socket)
-	  end,
-	  Ret;
+      end;
     Error ->
       Error
   end.
