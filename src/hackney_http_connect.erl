@@ -141,6 +141,7 @@ do_handshake(Socket, Host, Port, Options) ->
   ProxyUser = proplists:get_value(connect_user, Options),
   ProxyPass = proplists:get_value(connect_pass, Options, <<>>),
   ProxyPort = proplists:get_value(connect_port, Options),
+  Timeout = proplists:get_value(connect_timeout, Options, 30000),
   
   %% set defaults headers
   HostHdr = case ProxyPort of
@@ -168,13 +169,13 @@ do_handshake(Socket, Host, Port, Options) ->
     <<"\r\n\r\n">>],
   case gen_tcp:send(Socket, Payload) of
     ok ->
-      check_response(Socket);
+      check_response(Socket, Timeout);
     Error ->
       Error
   end.
 
-check_response(Socket) ->
-  case gen_tcp:recv(Socket, 0, ?TIMEOUT) of
+check_response(Socket, Timeout) ->
+  case gen_tcp:recv(Socket, 0, Timeout) of
     {ok, Data} ->
       check_status(Data);
     Error ->

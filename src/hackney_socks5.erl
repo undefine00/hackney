@@ -19,7 +19,7 @@
   shutdown/2,
   sockname/1]).
 
--define(TIMEOUT, infinity).
+-define(TIMEOUT, 60000).
 
 -type socks5_socket() :: {atom(), inet:socket()}.
 -export_type([socks5_socket/0]).
