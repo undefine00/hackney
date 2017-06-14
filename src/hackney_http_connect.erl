@@ -32,7 +32,7 @@ messages({_, _}) ->
 
 
 connect(ProxyHost, ProxyPort, Opts) ->
-  connect(ProxyHost, ProxyPort, Opts, infinity).
+  connect(ProxyHost, ProxyPort, Opts, 90000).
 
 connect(ProxyHost, ProxyPort, Opts, Timeout)
   when is_list(ProxyHost), is_integer(ProxyPort),
