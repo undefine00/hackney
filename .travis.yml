@@ -1,6 +1,7 @@
 language: erlang
 otp_release:
-  - 19.1
+  - 19.3
+
 env:
   - TEST=1
 before_script:
@@ -13,6 +14,7 @@ before_install:
 
 script:
   - ./support/rebar3 eunit
+  - ./support/rebar3 dialyzer
 
 cache:
   directories:

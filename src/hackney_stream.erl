@@ -25,6 +25,8 @@ init(Parent, Owner, Ref, Client) ->
   %% register the stream
   ok = proc_lib:init_ack(Parent, {ok, self()}),
 
+  ok = wait_for_controlling_process(),
+
   Parser = hackney_http:parser([response]),
   try
     stream_loop(Parent, Owner, Ref, Client#client{parser=Parser,
@@ -34,6 +36,14 @@ init(Parent, Owner, Ref, Client) ->
       {{Class, Reason,
         erlang:get_stacktrace()},
         "An unexpected error occurred."}}}}
+  end.
+
+wait_for_controlling_process() ->
+  receive
+    controlling_process_done ->
+      ok
+  after 10000 ->
+    timeout
   end.
 
 stream_loop(Parent, Owner, Ref, #client{transport=Transport,
@@ -96,6 +106,7 @@ maybe_continue(Parent, Owner, Ref, #client{transport=Transport,
     {Ref, resume} ->
       stream_loop(Parent, Owner, Ref, Client);
     {Ref, pause} ->
+      Transport:setopts(Socket, [{active, false}]),
       proc_lib:hibernate(?MODULE, maybe_continue, [Parent, Owner, Ref,
         Client]);
     {Ref, stop_async, From} ->
@@ -136,11 +147,13 @@ maybe_continue(Parent, Owner, Ref, #client{transport=Transport,
       ?report_trace("stream: unexpected message", [{message, Else}]),
       error_logger:error_msg("Unexpected message: ~w~n", [Else])
   after 5000 ->
-
+    Transport:setopts(Socket, [{active, false}]),
     proc_lib:hibernate(?MODULE, maybe_continue, [Parent, Owner, Ref,
       Client])
 
   end.
+
+
 
 
 %% if follow_redirect is true, we are parsing the headers to fetch the
@@ -254,14 +267,18 @@ async_recv(Parent, Owner, Ref,
         on_body when (Version =:= {1, 0} orelse Version =:= {1, 1})
                        andalso CLen =:= nil ->
           Owner ! {hackney_response, Ref, Buffer},
-          Owner ! {hackney_response, Ref, done};
+          Owner ! {hackney_response, Ref, done},
+          ok;
         on_body when TE =:= <<"identity">> ->
           Owner ! {hackney_response, Ref, Buffer},
-          Owner ! {hackney_response, Ref, done};
+          Owner ! {hackney_response, Ref, done},
+          ok;
         on_body ->
-          Owner ! {hackney_response, Ref, {error, {closed, Buffer}}};
+          Owner ! {hackney_response, Ref, {error, {closed, Buffer}}},
+          ok;
         _ ->
-          Owner ! {hackney_response, Ref, {error, closed}}
+          Owner ! {hackney_response, Ref, {error, closed}},
+          ok
       end,
       Transport:close(Sock);
     {Error, Sock, Reason} ->
