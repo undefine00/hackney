@@ -2,9 +2,9 @@
 
 # hackney - HTTP client library in Erlang #
 
-Copyright (c) 2012-2017 Benoît Chesneau.
+Copyright (c) 2012-2018 Benoît Chesneau.
 
-__Version:__ 1.9.0
+__Version:__ 1.13.0
 
 # hackney
 
@@ -102,7 +102,7 @@ This fixes zsh (and maybe other shells) escript-related bugs. Also this should s
 
 ```erlang-repl
 
-1>> hackney:start().
+1>> application:ensure_all_started(hackney).
 ok
 ```
 
@@ -382,7 +382,9 @@ behaviour.
 
 See for example the
 [hackney_disp](https://github.com/benoitc/hackney_disp) a load-balanced
-Pool dispatcher based on dispcount].> Note: for now you can`t force the pool handler / client.
+Pool dispatcher based on dispcount].
+
+> Note: for now you can`t force the pool handler / client.
 
 ### Automatically follow a redirection
 
@@ -531,6 +533,7 @@ $ kill `cat httpbin.pid`
 <tr><td><a href="hackney_http_connect.md" class="module">hackney_http_connect</a></td></tr>
 <tr><td><a href="hackney_local_tcp.md" class="module">hackney_local_tcp</a></td></tr>
 <tr><td><a href="hackney_manager.md" class="module">hackney_manager</a></td></tr>
+<tr><td><a href="hackney_metrics.md" class="module">hackney_metrics</a></td></tr>
 <tr><td><a href="hackney_multipart.md" class="module">hackney_multipart</a></td></tr>
 <tr><td><a href="hackney_pool.md" class="module">hackney_pool</a></td></tr>
 <tr><td><a href="hackney_pool_handler.md" class="module">hackney_pool_handler</a></td></tr>

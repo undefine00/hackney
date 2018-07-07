@@ -293,8 +293,10 @@ parse_header(Line, St) ->
                  end,
   St1 = case hackney_bstr:to_lower(hackney_bstr:trim(Key)) of
           <<"content-length">> ->
-            CLen = list_to_integer(binary_to_list(hackney_bstr:trim(Value))),
-            St#hparser{clen=CLen};
+            case hackney_util:to_int(Value) of
+              {ok, CLen} -> St#hparser{clen=CLen};
+              false -> St#hparser{clen=bad_int}
+            end;
           <<"transfer-encoding">> ->
             TE = hackney_bstr:to_lower(hackney_bstr:trim(Value)),
             St#hparser{te=TE};
@@ -323,23 +325,25 @@ parse_trailers(St, Acc) ->
     _ -> error
   end.
 
-parse_body(St=#hparser{body_state=waiting, te=TE, clen=Length,
-  method=Method, buffer=Buffer}) ->
-  case TE of
-    <<"chunked">> ->
+parse_body(#hparser{body_state=waiting, method= <<"HEAD">>, buffer=Buffer}) ->
+ {done, Buffer};
+parse_body(St=#hparser{body_state=waiting, te=TE, clen=Length, buffer=Buffer}) ->
+  case {TE, Length} of
+    {<<"chunked">>, _} ->
       parse_body(St#hparser{body_state=
       {stream, fun te_chunked/2, {0, 0}, fun ce_identity/1}});
-    _ when Length =:= 0 orelse Method =:= <<"HEAD">> ->
+    {_, 0} ->
       {done, Buffer};
-    _ ->
-      parse_body(St#hparser{body_state=
-      {stream, fun te_identity/2, {0, Length},
-        fun ce_identity/1}})
+    {_, bad_int} ->
+      {done, Buffer};
+    {_, _} ->
+      parse_body(
+        St#hparser{body_state={stream, fun te_identity/2, {0, Length}, fun ce_identity/1}}
+       )
   end;
 parse_body(#hparser{body_state=done, buffer=Buffer}) ->
   {done, Buffer};
-parse_body(St=#hparser{buffer=Buffer, body_state={stream, _, _, _}})
-  when byte_size(Buffer) > 0 ->
+parse_body(St=#hparser{buffer=Buffer, body_state={stream, _, _, _}}) when byte_size(Buffer) > 0 ->
   transfer_decode(Buffer, St#hparser{buffer= <<>>});
 parse_body(St) ->
   {more, St, <<>>}.
@@ -443,7 +447,7 @@ read_size(Data) ->
   case read_size(Data, [], true) of
     {ok, Line, Rest} ->
       case io_lib:fread("~16u", Line) of
-        {ok, [Size], []} ->
+        {ok, [Size], _} ->
           {ok, Size, Rest};
         _ ->
           {error, {poorly_formatted_size, Line}}
@@ -459,6 +463,9 @@ read_size(<<"\r\n", Rest/binary>>, Acc, _) ->
   {ok, lists:reverse(Acc), Rest};
 
 read_size(<<$;, Rest/binary>>, Acc, _) ->
+  read_size(Rest, Acc, false);
+
+read_size(<<$\s, Rest/binary>>, Acc, _) ->
   read_size(Rest, Acc, false);
 
 read_size(<<C, Rest/binary>>, Acc, AddToAcc) ->
