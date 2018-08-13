@@ -44,7 +44,7 @@ messages({_, _}) ->
 
 
 connect(Host, Port, Opts) ->
-  connect(Host, Port, Opts, infinity).
+  connect(Host, Port, Opts, 35000).
 
 
 connect(Host, Port, Opts, Timeout) when is_list(Host), is_integer(Port),
