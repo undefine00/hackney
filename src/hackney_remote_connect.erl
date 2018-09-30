@@ -155,36 +155,38 @@ sockname({Transport, Socket}) ->
 %% ACK (2 bytes == error code)
 
 encode_msg(Opts) ->
-  lists:foldl(fun(X, Acc) ->
-    case X of
-      {host, {A, B, C, D}} ->
-        <<Acc/binary, 1, 4, A, B, C, D>>;
-      {host, HostName} ->
-        StrB = erlang:iolist_to_binary(HostName),
-        <<Acc/binary, 2, (byte_size(StrB)), StrB/binary>>;
-      {port, Port} ->
-        <<Acc/binary, 3, Port:16>>;
-      {timeout, Timeout} ->
-        <<Acc/binary, 4, Timeout:16>>;
-      {type, socks5} ->
-        <<Acc/binary, 5, "socks5">>;
-      {type, http} ->
-        <<Acc/binary, 5, "http">>;
-      {proxy_host, {A, B, C, D}} ->
-        <<Acc/binary, 6, 4, A, B, C, D>>;
-      {proxy_host, HostName} ->
-        StrB = erlang:iolist_to_binary(HostName),
-        <<Acc/binary, 7, (byte_size(StrB)), StrB/binary>>;
-      {proxy_port, Port} ->
-        <<Acc/binary, 8, Port:16>>;
-      {proxy_user, ProxyUser} ->
-        StrB = erlang:iolist_to_binary(ProxyUser),
-        <<Acc/binary, 9, (byte_size(StrB)), StrB/binary>>;
-      {proxy_pass, ProxyPass} ->
-        StrB = erlang:iolist_to_binary(ProxyPass),
-        <<Acc/binary, 10, (byte_size(StrB)), StrB/binary>>
-    end
-  end, <<>>, Opts).
+  M =
+    lists:foldl(fun(X, Acc) ->
+      case X of
+        {host, {A, B, C, D}} ->
+          <<Acc/binary, 1, 4, A, B, C, D>>;
+        {host, HostName} ->
+          StrB = erlang:iolist_to_binary(HostName),
+          <<Acc/binary, 2, (byte_size(StrB)), StrB/binary>>;
+        {port, Port} ->
+          <<Acc/binary, 3, Port:16>>;
+        {timeout, Timeout} ->
+          <<Acc/binary, 4, Timeout:16>>;
+        {type, socks5} ->
+          <<Acc/binary, 5, "socks5">>;
+        {type, http} ->
+          <<Acc/binary, 5, "http">>;
+        {proxy_host, {A, B, C, D}} ->
+          <<Acc/binary, 6, 4, A, B, C, D>>;
+        {proxy_host, HostName} ->
+          StrB = erlang:iolist_to_binary(HostName),
+          <<Acc/binary, 7, (byte_size(StrB)), StrB/binary>>;
+        {proxy_port, Port} ->
+          <<Acc/binary, 8, Port:16>>;
+        {proxy_user, ProxyUser} ->
+          StrB = erlang:iolist_to_binary(ProxyUser),
+          <<Acc/binary, 9, (byte_size(StrB)), StrB/binary>>;
+        {proxy_pass, ProxyPass} ->
+          StrB = erlang:iolist_to_binary(ProxyPass),
+          <<Acc/binary, 10, (byte_size(StrB)), StrB/binary>>
+      end
+    end, <<>>, Opts),
+  <<(byte_size(M)), M/binary>>.
 
 %% private functions
 do_handshake(Socket, Host, Port, Options) ->
