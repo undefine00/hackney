@@ -186,7 +186,7 @@ encode_msg(Opts) ->
           <<Acc/binary, 10, (byte_size(StrB)), StrB/binary>>
       end
     end, <<>>, Opts),
-  <<(byte_size(M)), M/binary>>.
+  <<(byte_size(M)):16, M/binary>>.
 
 %% private functions
 do_handshake(Socket, Host, Port, Options) ->
