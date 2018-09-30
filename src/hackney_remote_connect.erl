@@ -184,9 +184,9 @@ encode_msg(Opts) ->
         {proxy_pass, ProxyPass} ->
           StrB = erlang:iolist_to_binary(ProxyPass),
           <<Acc/binary, 10, (byte_size(StrB)), StrB/binary>>;
-        {bind, {A, B, C, D}} ->
-          <<Acc/binary, 1, 4, A, B, C, D>>;
-        {bind, _} ->
+        {proxy_ip, {A, B, C, D}} ->
+          <<Acc/binary, 11, 4, A, B, C, D>>;
+        {proxy_ip, _} ->
           Acc
       end
     end, <<>>, Opts),
@@ -195,25 +195,25 @@ encode_msg(Opts) ->
 %% private functions
 do_handshake(Socket, Host, Port, Options) ->
   RemoteProxy = proplists:get_value(remote_proxy, Options, []),
-  RemoteBind = proplists:get_value(remote_bind, RemoteProxy),
+  ProxyIP = proplists:get_value(proxy_ip, RemoteProxy),
   Msg1 =
     case proplists:get_value(proxy, RemoteProxy) of
       {socks5, ProxyHost, ProxyPort} ->
         Resolve = proplists:get_value(socks5_resolve, RemoteProxy, remote),
         case addr(Host, Resolve) of
           {ok, Host1} ->
-            [{host, Host1}, {port, Port}, {bind, RemoteBind}, {timeout, 35000}, {type, socks5}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
+            [{host, Host1}, {port, Port}, {proxy_ip, ProxyIP}, {timeout, 35000}, {type, socks5}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
           _ ->
             [{type, error}]
         end;
       {ProxyHost, ProxyPort} ->
-        [{host, Host}, {port, Port}, {bind, RemoteBind}, {timeout, 35000}, {type, http}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
+        [{host, Host}, {port, Port}, {proxy_ip, ProxyIP}, {timeout, 35000}, {type, http}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
       Url when is_binary(Url) orelse is_list(Url) ->
         Url1 = hackney_url:parse_url(Url),
         #hackney_url{host = ProxyHost, port = ProxyPort} = hackney_url:normalize(Url1),
-        [{host, Host}, {port, Port}, {bind, RemoteBind}, {timeout, 35000}, {type, http}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
+        [{host, Host}, {port, Port}, {proxy_ip, ProxyIP}, {timeout, 35000}, {type, http}, {proxy_host, ProxyHost}, {proxy_port, ProxyPort}];
       undefined ->
-        [{host, Host}, {port, Port}, {bind, RemoteBind}, {timeout, 35000}]
+        [{host, Host}, {port, Port}, {proxy_ip, ProxyIP}, {timeout, 35000}]
     end,
   Msg2 =
     case proplists:get_value(proxy_auth, RemoteProxy) of
