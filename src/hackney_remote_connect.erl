@@ -160,7 +160,8 @@ encode_msg(Opts) ->
       {host, {A, B, C, D}} ->
         <<Acc/binary, 1, 4, A, B, C, D>>;
       {host, HostName} ->
-        <<Acc/binary, 2, (byte_size(HostName)), HostName/binary>>;
+        StrB = erlang:iolist_to_binary(HostName),
+        <<Acc/binary, 2, (byte_size(StrB)), StrB/binary>>;
       {port, Port} ->
         <<Acc/binary, 3, Port:16>>;
       {timeout, Timeout} ->
@@ -172,13 +173,16 @@ encode_msg(Opts) ->
       {proxy_host, {A, B, C, D}} ->
         <<Acc/binary, 6, 4, A, B, C, D>>;
       {proxy_host, HostName} ->
-        <<Acc/binary, 7, (byte_size(HostName)), HostName/binary>>;
+        StrB = erlang:iolist_to_binary(HostName),
+        <<Acc/binary, 7, (byte_size(StrB)), StrB/binary>>;
       {proxy_port, Port} ->
         <<Acc/binary, 8, Port:16>>;
       {proxy_user, ProxyUser} ->
-        <<Acc/binary, 9, (byte_size(ProxyUser)), ProxyUser/binary>>;
+        StrB = erlang:iolist_to_binary(ProxyUser),
+        <<Acc/binary, 9, (byte_size(StrB)), StrB/binary>>;
       {proxy_pass, ProxyPass} ->
-        <<Acc/binary, 10, (byte_size(ProxyPass)), ProxyPass/binary>>
+        StrB = erlang:iolist_to_binary(ProxyPass),
+        <<Acc/binary, 10, (byte_size(StrB)), StrB/binary>>
     end
   end, <<>>, Opts).
 
