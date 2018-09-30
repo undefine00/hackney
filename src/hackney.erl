@@ -675,6 +675,24 @@ maybe_proxy(Transport, Host, Port, Options)
 
       %% connect using a socks5 proxy
       hackney_connect:connect(hackney_socks5, Host, Port, Options1, true);
+    {remote, RemoteHost, RemotePort} ->
+      ConnectOpts0 = proplists:get_value(connect_options, Options, []),
+      RemoteProxy = proplists:get_value(remote_proxy, Options, []),
+      ConnectOpts1 = [{remote_host, RemoteHost},
+        {remote_port, RemotePort},
+        {remote_proxy, RemoteProxy},
+        {remote_transport, Transport}] ++ ConnectOpts0,
+      Insecure = proplists:get_value(insecure, Options, false),
+      ConnectOpts2 =
+        case proplists:get_value(ssl_options, Options) of
+          undefined ->
+            [{insecure, Insecure}] ++ ConnectOpts1;
+          SslOpts ->
+            [{ssl_options, SslOpts},
+             {insecure, Insecure}] ++ ConnectOpts1
+        end,
+      Options1 = lists:keystore(connect_options, 1, Options, {connect_options, ConnectOpts2}),
+      hackney_connect:connect(hackney_remote_connect, Host, Port, Options1, true);
     _ ->
       ?report_debug("request without proxy", []),
       hackney_connect:connect(Transport, Host, Port, Options, true)
