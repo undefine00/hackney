@@ -184,9 +184,9 @@ encode_msg(Opts) ->
 
 %% private functions
 do_handshake(Socket, Host, Port, Options) ->
-  RemoteProxy = proplists:get_value(Options, remote_proxy, []),
+  RemoteProxy = proplists:get_value(remote_proxy, Options, []),
   Msg1 =
-    case proplists:get_value(RemoteProxy, proxy) of
+    case proplists:get_value(proxy, RemoteProxy) of
       {socks5, ProxyHost, ProxyPort} ->
         Resolve = proplists:get_value(socks5_resolve, RemoteProxy, remote),
         case addr(Host, Resolve) of
@@ -205,7 +205,7 @@ do_handshake(Socket, Host, Port, Options) ->
         [{host, Host}, {port, Port}, {timeout, 35000}]
     end,
   Msg2 =
-    case proplists:get_value(RemoteProxy, proxy) of
+    case proplists:get_value(proxy_auth, RemoteProxy) of
       {ProxyUser, ProxyPass} ->
         Msg1 ++ [{proxy_user, ProxyUser}, {proxy_pass, ProxyPass}];
       _ ->
